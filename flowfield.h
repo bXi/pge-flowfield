@@ -9,7 +9,7 @@ class flowField
 public:
     std::vector<olc::vf2d> vectors;
     int cols, rows;
-    float inc = 0.1;
+    float inc = 0.01;
     float zoff = 0;
     int scl;
     int width, height;

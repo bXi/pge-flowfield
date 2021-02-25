@@ -5,45 +5,59 @@
 #include "flowfield.h"
 #include "particle.h"
 
+#define WIDTH 1920
+#define HEIGHT 1080
+#define PIXELSIZE 1
+#define PARTICLES 2000
+
 class appFlowField : public olc::PixelGameEngine
 {
-public:
-	std::vector<particle> particles;
+private:
+	//mutable std::vector<particle> particles;
+	particle particles[PARTICLES];
+
 	flowField flowfield = flowField(10, this);
 
+public:
 	appFlowField()
 	{
 		sAppName = "Flowfield";
 	}
 
-public:
+
+public: 
 	bool OnUserCreate() override
 	{
+		flowfield = flowField(15, this);
 
 		flowfield.update();
 
-		for (int i = 0; i < 1000; i++)
+		for (int i = 0; i < PARTICLES; i++)
 		{
-			olc::vf2d start = {(float)(std::rand() % ScreenWidth()), (float)(std::rand() % ScreenHeight())};
-			particle p = particle(start, std::rand() % 6 + 2, this);
-			particles.push_back(p);
+			int x = std::rand() % ScreenWidth();
+			int y = std::rand() % ScreenHeight();
+			particle p = particle(x, y, std::rand() % 20 + 4, this);
+			particles[i] = p;
 		}
 
 		Clear(olc::WHITE);
 		
-
+		SetPixelMode(olc::Pixel::ALPHA);
 		return true;
 	}
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
+
 		flowfield.update();
 
-		for (auto p : particles)
-		{
-			p.follow(flowfield);
-			p.run(this);
+		//flowfield.display(this);
+		//SetPixelMode(olc::Pixel::ALPHA);
+		for (int i = 0; i < PARTICLES; i++) {
+			particles[i].run(this, flowfield);
 		}
+		//SetPixelMode(olc::Pixel::NORMAL);
+		//DrawRect(0, 0, WIDTH, HEIGHT, olc::Pixel(255, 0, 255));
 		return true;
 	}
 };
@@ -51,7 +65,7 @@ public:
 int main()
 {
 	appFlowField app;
-	if (app.Construct(1024, 960, 1, 1))
+	if (app.Construct(WIDTH, HEIGHT, PIXELSIZE, PIXELSIZE))
 		app.Start();
 	return 0;
 }

@@ -1,45 +1,66 @@
 #include "particle.h"
+#include <math.h>
 
-particle::particle(olc::vf2d start, float maxspeed, olc::PixelGameEngine* pge)
+particle::particle() {
+
+}
+
+particle::particle(int x, int y, float maxspeed, olc::PixelGameEngine* pge)
 {
     width = pge->ScreenWidth();
     height = pge->ScreenHeight();
     maxSpeed = maxspeed;
-    pos = start;
-    vel = olc::vf2d(0.0f, 0.0f);
+    pos = olc::vf2d(x, y);
+    vel = olc::vf2d(3.0f, 0.0f);
     acc = olc::vf2d(0.0f, 0.0f);
-    prevPos = pos;
+    prevPos = olc::vf2d(pos.x, pos.y);
 }
 
-void particle::run(olc::PixelGameEngine* pge)
+void particle::run(olc::PixelGameEngine* pge, flowField ff)
 {
-    update();
+
+    float t = pge->GetElapsedTime();
+    follow(ff);
+    update(t);
     edges();
+    //pge->DrawString(olc::vf2d(2.0f, 2.0f),  "pos.x: " + std::to_string(pos.x) + ", pos.y: " + std::to_string(pos.y), olc::BLACK);
+    //pge->DrawString(olc::vf2d(2.0f, 10.0f), "vel.x: " + std::to_string(vel.x) + ", vel.y: " + std::to_string(vel.y), olc::BLACK);
+    //pge->DrawString(olc::vf2d(2.0f, 18.0f), "acc.x: " + std::to_string(acc.x) + ", acc.y: " + std::to_string(acc.y), olc::BLACK);
+    //pge->DrawString(olc::vf2d(2.0f, 26.0f), "prp.x: " + std::to_string(prevPos.x) + ", prp.y: " + std::to_string(prevPos.y), olc::BLACK);
     show(pge);
 }
 
-void particle::update()
+void particle::update(float t)
 {
-    pos += vel;
-    olc::vf2d velNorm = vel.norm();
+   
+    pos += vel * t * 20;
+    
 
-    vel = velNorm;
+    float w = sqrt(vel.x * vel.x + vel.y * vel.y);
+    if (w > 0) {
+        vel.x /= w;
+        vel.y /= w;
+    }
+
+    
+
+    //velNorm = vel.norm();
+    vel *= maxSpeed;
+
+    //vel = velNorm;
     vel += acc;
+    
     acc *= 0;
+
 }
 void particle::applyForce(olc::vf2d force)
 {
-    acc.x += force.x * 100;
-    acc.y += force.y * 100;
+    acc += force;
 }
 
 void particle::show(olc::PixelGameEngine *pge)
 {
-    //stroke(0, 5);
-    //strokeWeight(1);
-    pge->DrawLine(pos.x, pos.y, prevPos.x, prevPos.y, olc::BLACK);
-
-    //point(pos.x, pos.y);
+    pge->DrawLine(pos, prevPos, olc::Pixel(0, 0, 0, 5));
     updatePreviousPos();
 }
 void particle::edges()
@@ -72,8 +93,8 @@ void particle::updatePreviousPos()
 }
 void particle::follow(flowField flowfield)
 {
-    int x = floor(pos.x / (flowfield.scl * flowfield.scl));
-    int y = floor(pos.y / (flowfield.scl * flowfield.scl));
+    int x = floor(pos.x / flowfield.scl);
+    int y = floor(pos.y / flowfield.scl);
     int index = x + y * flowfield.cols;
 
     olc::vf2d force = flowfield.vectors[index];
